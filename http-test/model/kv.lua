@@ -30,19 +30,17 @@ function kv.model(config)
     end
 
     --check rps
-    function model.before()
-        if require('stat').stat({ only_numbers = true })['stat.net.requests.rps'] > configm.rps then
-            return true
-        end
-        return false
-    end
-
-    function model.create(req)
-        if model.before() then
+    function model.before(req)
+        log.debug('box.stat.net(): ' .. json.encode(box.stat.net()))
+        if box.stat.net()['RECEIVED'].rps > configm.rps then
             local resp = req:render({json = { message = 'Too many requests' }})
             resp.status = 429
             return resp
         end
+    end
+
+    function model.create(req)
+        model.before(req)
         log.debug("create req: " .. tostring(req))
         local body = req:json()
         log.debug("create req body: " .. json.encode(body))
@@ -74,11 +72,7 @@ function kv.model(config)
     end
 
     function model.put_by_key(req)
-        if model.before() then
-            local resp = req:render({json = { message = 'Too many requests' }})
-            resp.status = 429
-            return resp
-        end
+        model.before(req)
         log.debug("put by key: " .. tostring(req))
         local body = req:json()
         log.debug("put req body: " .. json.encode(body))
@@ -103,11 +97,7 @@ function kv.model(config)
     end
 
     function model.get_by_key(req)
-        if model.before() then
-            local resp = req:render({json = { message = 'Too many requests' }})
-            resp.status = 429
-            return resp
-        end
+        model.before(req)
         log.debug("get by key: " .. tostring(req))
         local key = req:stash('id')
         if key ~= nil and key ~= nil  then
@@ -132,11 +122,7 @@ function kv.model(config)
 
 
     function model.delete_by_key(req)
-        if model.before() then
-            local resp = req:render({json = { message = 'Too many requests' }})
-            resp.status = 429
-            return resp
-        end
+        model.before(req)
         log.debug("delete by key: " .. tostring(req))
         local key = req:stash('id')
         if key ~= nil and key ~= nil  then

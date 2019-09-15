@@ -6,7 +6,7 @@
 
 local log = require('log')
 local json = require('json')
-
+local configm = require('http-test.config.main')
 -- Моель спейса
 local kv = {}
 
@@ -29,7 +29,20 @@ function kv.model(config)
         return box.space[model.SPACE_NAME]
     end
 
+    --check rps
+    function model.before()
+        if require('stat').stat({ only_numbers = true })['stat.net.requests.rps'] > configm.rps then
+            return true
+        end
+        return false
+    end
+
     function model.create(req)
+        if model.before() then
+            local resp = req:render({json = { message = 'Too many requests' }})
+            resp.status = 429
+            return resp
+        end
         log.debug("create req: " .. tostring(req))
         local body = req:json()
         log.debug("create req body: " .. json.encode(body))
@@ -61,6 +74,11 @@ function kv.model(config)
     end
 
     function model.put_by_key(req)
+        if model.before() then
+            local resp = req:render({json = { message = 'Too many requests' }})
+            resp.status = 429
+            return resp
+        end
         log.debug("put by key: " .. tostring(req))
         local body = req:json()
         log.debug("put req body: " .. json.encode(body))
@@ -69,8 +87,8 @@ function kv.model(config)
             local res = model.get_space():update({key}, {{'=', 2, body.value }})
             log.debug("put res from space: " .. tostring(res))
             if res == nil then
-                local resp = req:render({json = { message = 'Error' }})
-                resp.status = 500
+                local resp = req:render({json = { message = 'Not Found' }})
+                resp.status = 404
                 return resp
             end
             return req:render({
@@ -85,6 +103,11 @@ function kv.model(config)
     end
 
     function model.get_by_key(req)
+        if model.before() then
+            local resp = req:render({json = { message = 'Too many requests' }})
+            resp.status = 429
+            return resp
+        end
         log.debug("get by key: " .. tostring(req))
         local key = req:stash('id')
         if key ~= nil and key ~= nil  then
@@ -109,6 +132,11 @@ function kv.model(config)
 
 
     function model.delete_by_key(req)
+        if model.before() then
+            local resp = req:render({json = { message = 'Too many requests' }})
+            resp.status = 429
+            return resp
+        end
         log.debug("delete by key: " .. tostring(req))
         local key = req:stash('id')
         if key ~= nil and key ~= nil  then

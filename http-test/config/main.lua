@@ -12,6 +12,7 @@ return {
     listen_port = 3301,
     http_host = '0.0.0.0',
     http_port = 8800,
+    rps = 2,
 
     log_level = 7,
     memtx_memory = 268435456,

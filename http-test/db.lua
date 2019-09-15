@@ -30,4 +30,8 @@ function db.create_database()
     log.debug('kv space initialization completed')
 end
 
+function db.truncate_database()
+    box.space[kv.SPACE_NAME]:truncate()
+end
+
 return db

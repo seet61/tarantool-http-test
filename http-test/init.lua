@@ -35,14 +35,18 @@ box.schema.user.grant('root', 'read,write,execute, drop', 'universe', nil, {if_n
 
 log.debug('box configured: %s', config.version)
 
+function before_dispatch()
+    log.debug('call before handler')
+end
+
 -- Api routes
 require('http.server').new(config.http_host, config.http_port, {
     charset = 'utf-8',
     display_errors = true,
     log_requests = true,
 })
-:route({ path = '/kv', method = 'POST' }, kv.create)
-:route({ path = '/kv/:id', method = 'PUT' },  kv.put_by_key)
-:route({ path = '/kv/:id', method = 'GET' },  kv.get_by_key)
-:route({ path = '/kv/:id', method = 'DELETE' },  kv.delete_by_key)
+:route({ path = '/kv', method = 'POST' }, kv.create, before_dispatch)
+:route({ path = '/kv/:id', method = 'PUT' }, kv.put_by_key, before_dispatch)
+:route({ path = '/kv/:id', method = 'GET' }, kv.get_by_key, before_dispatch)
+:route({ path = '/kv/:id', method = 'DELETE' }, kv.delete_by_key, before_dispatch)
 :start()

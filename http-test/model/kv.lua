@@ -42,8 +42,12 @@ function kv.model(config)
     function model.create(req)
         model.before(req)
         log.debug("create req: " .. tostring(req))
+        if not req:json() then
+            local resp = req:render({json = { message = 'Bad request' }})
+            resp.status = 400
+            return resp
+        end
         local body = req:json()
-        log.debug("create req body: " .. json.encode(body))
         local key = body.key
         local value = body.value
         if key ~= nil and key ~= '' then
@@ -74,8 +78,12 @@ function kv.model(config)
     function model.put_by_key(req)
         model.before(req)
         log.debug("put by key: " .. tostring(req))
+        if pcall(req:json()) then
+            local resp = req:render({json = { message = 'Bad request' }})
+            resp.status = 400
+            return resp
+        end
         local body = req:json()
-        log.debug("put req body: " .. json.encode(body))
         local key = req:stash('id')
         if key ~= nil and key ~= ''  then
             local res = model.get_space():update({key}, {{'=', 2, body.value }})

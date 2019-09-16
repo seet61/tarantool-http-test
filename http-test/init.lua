@@ -45,8 +45,8 @@ require('http.server').new(config.http_host, config.http_port, {
     display_errors = true,
     log_requests = true,
 })
-:route({ path = '/kv', method = 'POST' }, kv.create, before_dispatch)
-:route({ path = '/kv/:id', method = 'PUT' }, kv.put_by_key, before_dispatch)
-:route({ path = '/kv/:id', method = 'GET' }, kv.get_by_key, before_dispatch)
-:route({ path = '/kv/:id', method = 'DELETE' }, kv.delete_by_key, before_dispatch)
+:route({ path = '/kv', method = 'POST' }, kv.create)
+:route({ path = '/kv/:id', method = 'PUT' }, kv.put_by_key)
+:route({ path = '/kv/:id', method = 'GET' }, kv.get_by_key)
+:route({ path = '/kv/:id', method = 'DELETE' }, kv.delete_by_key)
 :start()

@@ -9,6 +9,7 @@ local fio = require('fio')
 local config = require('http-test.config.main')
 local db = require('http-test.db')
 local kv = require('http-test.model.kv').model()
+local fiber = require('fiber')
 
 log.debug('package.path: ' .. package.path)
 --create folder
@@ -35,9 +36,21 @@ box.schema.user.grant('root', 'read,write,execute, drop', 'universe', nil, {if_n
 
 log.debug('box configured: %s', config.version)
 
-function before_dispatch()
-    log.debug('call before handler')
+local function reload_counter()
+    while true do
+        local counter = box.space.counter:get('count')
+        if box.space.counter:get('count') == nil then
+            box.space.counter:insert({'count', config.rps})
+            log.debug('init counter')
+        else
+            log.debug('count: ' .. tostring(counter[2]))
+            box.space.counter:update('count', {{'=', 2, config.rps}})
+        end
+        fiber.sleep(1)
+    end
 end
+fiber.create(reload_counter)
+log.debug("fiber reload_counter was started")
 
 -- Api routes
 require('http.server').new(config.http_host, config.http_port, {

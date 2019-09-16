@@ -32,15 +32,21 @@ function kv.model(config)
     --check rps
     function model.before(req)
         log.debug('box.stat.net(): ' .. json.encode(box.stat.net()))
-        if box.stat.net()['RECEIVED'].rps > configm.rps then
+        local counter = box.space.counter:get('count')[2]
+        if counter == 0 then
             local resp = req:render({json = { message = 'Too many requests' }})
             resp.status = 429
             return resp
         end
+        counter = counter - 1
+        box.space.counter:update('count', {{'=', 2, counter}})
     end
 
     function model.create(req)
-        model.before(req)
+        local res = model.before(req)
+        if res ~= nil then
+            return res
+        end
         log.debug("create req: " .. tostring(req))
         if not req:json() then
             local resp = req:render({json = { message = 'Bad request' }})
@@ -76,7 +82,10 @@ function kv.model(config)
     end
 
     function model.put_by_key(req)
-        model.before(req)
+        local res = model.before(req)
+        if res ~= nil then
+            return res
+        end
         log.debug("put by key: " .. tostring(req))
         if pcall(req:json()) then
             local resp = req:render({json = { message = 'Bad request' }})
@@ -105,7 +114,10 @@ function kv.model(config)
     end
 
     function model.get_by_key(req)
-        model.before(req)
+        local res = model.before(req)
+        if res ~= nil then
+            return res
+        end
         log.debug("get by key: " .. tostring(req))
         local key = req:stash('id')
         if key ~= nil and key ~= nil  then
@@ -130,7 +142,10 @@ function kv.model(config)
 
 
     function model.delete_by_key(req)
-        model.before(req)
+        local res = model.before(req)
+        if res ~= nil then
+            return res
+        end
         log.debug("delete by key: " .. tostring(req))
         local key = req:stash('id')
         if key ~= nil and key ~= nil  then

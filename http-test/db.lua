@@ -10,6 +10,7 @@ local log = require('log')
 local db = {}
 
 local kv = require('http-test.model.kv').model()
+local counter = require('http-test.model.counter').model()
 
 function db.create_database()
     local kv_space = box.schema.space.create(kv.SPACE_NAME, {
@@ -28,6 +29,23 @@ function db.create_database()
     })
 
     log.debug('kv space initialization completed')
+
+    local counter_space = box.schema.space.create(counter.SPACE_NAME, {
+        if_not_exists = true
+    })
+
+    counter_space:format({
+        {name=counter.KEY_NAME,type=counter.KEY_TYPE},
+        {name=counter.VALUE_NAME,type=counter.VALUE_TYPE},
+    })
+
+    counter_space:create_index('primary', {
+        type = 'hash',
+        parts = {counter.KEY_NAME},
+        if_not_exists = true
+    })
+
+    log.debug('counter space initialization completed')
 end
 
 function db.truncate_database()
